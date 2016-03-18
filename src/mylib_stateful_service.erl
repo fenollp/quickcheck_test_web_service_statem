@@ -20,9 +20,12 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, { mr_county_guy = 0 :: non_neg_integer()
+-record(state, { mr_county_guy :: non_neg_integer()
                , listen_socket :: gen_tcp:socket()
                }).
+
+-define(LOG(Fmt, List),
+        io:format(Fmt++"\n", List)).
 
 %% API
 
@@ -41,7 +44,7 @@ init([]) ->
                                               , {keepalive, false}
                                               , {active, true}
                                               ]),
-    io:format("~s listening on port 4000\n", [?SERVER]),
+    ?LOG("~s listening on port 4000", [?SERVER]),
     State = #state{listen_socket = ListenSocket},
     accept(),
     {ok, State}.
@@ -50,7 +53,7 @@ handle_call(read, _From, State) ->
     OldValue = State#state.mr_county_guy,
     {reply, OldValue, State};
 handle_call(_Request, _From, State) ->
-    io:format("unhandled call: ~p\n", [_Request]),
+    ?LOG("unhandled call: ~p", [_Request]),
     {stop, not_implemented, {error,not_implemented}, State}.
 
 handle_cast(accept, State=#state{listen_socket = ListenSocket}) ->
@@ -61,30 +64,30 @@ handle_cast(accept, State=#state{listen_socket = ListenSocket}) ->
     end,
     {noreply, State};
 handle_cast(_Msg, State) ->
-    io:format("unhandled cast: ~p\n", [_Msg]),
+    ?LOG("unhandled cast: ~p", [_Msg]),
     {stop, {error,not_matched}, State}.
 
 handle_info({tcp,Socket,<<"GET /reset ",_/binary>>}, State) ->
     OldValue = State#state.mr_county_guy,
     NewState = State#state{mr_county_guy = 0},
-    io:format("State: ~p\n", [NewState#state.mr_county_guy]),
+    ?LOG("State: ~p", [NewState#state.mr_county_guy]),
     reply(Socket, OldValue),
     {noreply, NewState};
 handle_info({tcp,Socket,<<"GET /take ",_/binary>>}, State) ->
     OldValue = State#state.mr_county_guy,
     NewState = State#state{mr_county_guy = 1 + OldValue},
-    io:format("State: ~p\n", [NewState#state.mr_county_guy]),
+    ?LOG("State: ~p", [NewState#state.mr_county_guy]),
     reply(Socket, OldValue),
     {noreply, NewState};
 handle_info({tcp_closed,_Socket}, State) ->
     accept(),
     {noreply, State};
 handle_info(_Info, State) ->
-    io:format("unhandled info: ~p\n", [_Info]),
+    ?LOG("unhandled info: ~p", [_Info]),
     {stop, {error,not_matched}, State}.
 
 terminate(_Reason, _State) ->
-    io:format("terminating with ~p: ~p\n", [_State,_Reason]).
+    ?LOG("terminating with ~p: ~p", [_State,_Reason]).
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
@@ -104,7 +107,7 @@ data(Bin) ->
       "Content-Length: ", integer_to_binary(iolist_size(Payload)), "\r\n"
       "Content-Type: application/json\r\n"
       "\r\n"
-    , Payload, "\r\n"
+    , Payload
     ].
 
 %% End of Module.
