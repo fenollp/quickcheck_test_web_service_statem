@@ -20,7 +20,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, { mr_county_guy :: non_neg_integer()
+-record(state, { mr_county_guy = -1 :: non_neg_integer()
                , listen_socket :: gen_tcp:socket()
                }).
 
@@ -45,9 +45,10 @@ init([]) ->
                                               , {active, true}
                                               ]),
     ?LOG("~s listening on port 4000", [?SERVER]),
-    State = #state{listen_socket = ListenSocket},
+    NewState = #state{listen_socket = ListenSocket},
+    ?LOG("State: ~p", [NewState#state.mr_county_guy]),
     accept(),
-    {ok, State}.
+    {ok, NewState}.
 
 handle_call(read, _From, State) ->
     OldValue = State#state.mr_county_guy,
@@ -68,16 +69,15 @@ handle_cast(_Msg, State) ->
     {stop, {error,not_matched}, State}.
 
 handle_info({tcp,Socket,<<"GET /reset ",_/binary>>}, State) ->
-    OldValue = State#state.mr_county_guy,
     NewState = State#state{mr_county_guy = 0},
-    ?LOG("State: ~p", [NewState#state.mr_county_guy]),
-    reply(Socket, OldValue),
+    ?LOG("/reset\t State: ~p", [NewState#state.mr_county_guy]),
+    reply(Socket, NewState),
     {noreply, NewState};
 handle_info({tcp,Socket,<<"GET /take ",_/binary>>}, State) ->
     OldValue = State#state.mr_county_guy,
     NewState = State#state{mr_county_guy = 1 + OldValue},
-    ?LOG("State: ~p", [NewState#state.mr_county_guy]),
-    reply(Socket, OldValue),
+    ?LOG("/take\t State: ~p", [NewState#state.mr_county_guy]),
+    reply(Socket, NewState),
     {noreply, NewState};
 handle_info({tcp_closed,_Socket}, State) ->
     accept(),
@@ -97,7 +97,7 @@ code_change(_OldVsn, State, _Extra) ->
 accept() ->
     gen_server:cast(self(), accept).
 
-reply(Socket, Int) ->
+reply(Socket, #state{mr_county_guy = Int}) ->
     Data = data(integer_to_binary(Int)),
     ok = gen_tcp:send(Socket, Data).
 
