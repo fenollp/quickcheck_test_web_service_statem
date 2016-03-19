@@ -1,4 +1,4 @@
--module(stateful_service_eqc).
+-module(eqc_stateful_service).
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("eqc/include/eqc_statem.hrl").
@@ -26,8 +26,6 @@ take() ->
   Txt = http(get, "http://localhost:4000/take"),
   binary_to_integer(Txt).
 
-
-
 take_next(State, _Result, []) ->
   State + 1.
 
@@ -35,10 +33,8 @@ take_post(State, [], Result) ->
   eq(Result, State).
 
 
-weight(_State, take) ->
-  10;
-weight(_State, reset) ->
-  1.
+weight(_State, take) -> 10;
+weight(_State, reset) -> 1.
 
 prop_ticket_dispenser() ->
   {ok, _} = application:ensure_all_started(inets),

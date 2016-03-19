@@ -28,7 +28,7 @@ start_link() ->
 
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    I = mylib_stateful_service,
+    I = yi_stateful_service,
     ChildSpec =
         {I, {I, 'start_link', []}, 'permanent', 5 * 1000, 'worker', [I]},
     {ok, { {one_for_all, 0, 1}, [ChildSpec]} }.
