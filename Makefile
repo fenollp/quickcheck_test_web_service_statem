@@ -6,13 +6,14 @@ all:
 debug:
 	rebar3 do compile,shell
 
-compile-test: all
-#	erlc -o $(EBIN) test/pqc_stateful_service.erl
-	erlc -o $(EBIN) test/eqc_stateful_service.erl
-test: compile-test
+test: QC ?= proper
+test: test-$(QC)
+compile-test-$(QC): all
+	erlc -o $(EBIN) test/$(QC)_stateful_service.erl
+test-$(QC): compile-test-$(QC)
 	erl -pa $(EBIN)/ \
 	  -eval '{ok,_} = application:ensure_all_started(mylib)' \
-	  -eval 'eqc:quickcheck(eqc_stateful_service:prop_ticket_dispenser())' \
+	  -eval '$(QC):quickcheck($(QC)_stateful_service:prop_ticket_dispenser())' \
 	  -s init stop
 
 clean:
