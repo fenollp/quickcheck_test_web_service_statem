@@ -85,19 +85,19 @@ postcondition(S, {call,?MODULE,take,[]}, Result) ->
                end
               )).
 
- %% prop_par_ticket_dispenser() ->
- %%    {ok, _} = application:ensure_all_started(inets),
- %%    ?FORALL(Cmds, proper_statem:parallel_commands(?MODULE),
- %%            ?TRAPEXIT(
- %%               begin
- %%                   setup(),
- %%                   {_History,_State,Result} = Ran = proper_statem:run_parallel_commands(?MODULE, Cmds),
- %%                   cleanup(),
- %%                   ?WHENFAIL(io:format("History: ~w\nState: ~w\nResult: ~p\n", tuple_to_list(Ran))
- %%                            ,aggregate(command_names(Cmds), Result == ok)
- %%                            )
- %%               end
- %%              )).
+ prop_par_ticket_dispenser() ->
+    {ok, _} = application:ensure_all_started(inets),
+    ?FORALL(Cmds, proper_statem:parallel_commands(?MODULE),
+            ?TRAPEXIT(
+               begin
+                   setup(),
+                   {_Sequential,_Parallel,Result} = Ran = proper_statem:run_parallel_commands(?MODULE, Cmds),
+                   cleanup(),
+                   ?WHENFAIL(io:format("History: ~w\nState: ~w\nResult: ~p\n", tuple_to_list(Ran))
+                            ,aggregate(command_names(Cmds), Result == ok)
+                            )
+               end
+              )).
 
 %% Internals
 
