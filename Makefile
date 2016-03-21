@@ -1,24 +1,21 @@
-EBIN = _build/default/lib/mylib/ebin
+.PHONY: all debug test eqc clean
 
 all:
 	rebar3 compile
 
 debug:
-	rebar3 do compile,shell
+	rebar3 shell
 
-test: QC ?= proper
-test: test-$(QC)
-compile-test-$(QC): all
-	erlc -o $(EBIN) test/$(QC)_stateful_service.erl
-test-$(QC): compile-test-$(QC)
-	erl -pa $(EBIN)/ \
-	  -eval '{ok,_} = application:ensure_all_started(mylib)' \
-	  -eval '$(QC):quickcheck($(QC)_stateful_service:prop_ticket_dispenser())' \
-	  -s init stop
+test: eqc
+eqc:
+	rebar3 as test eqc -p prop_ticket_dispenser
 
 clean:
-	$(if $(wildcard test/.eqc-info test/*.eqc), rm test/.eqc-info test/*.eqc)
 	rebar3 clean
 
 distclean: clean
+	$(if $(wildcard .eqc-info), rm .eqc-info)
+	$(if $(wildcard *.eqc), rm *.eqc)
+	$(if $(wildcard .eqc/), rm -r .eqc/)
+	$(if $(wildcard .rebar3/), rm -r .rebar3/)
 	$(if $(wildcard _build), rm -r _build)
