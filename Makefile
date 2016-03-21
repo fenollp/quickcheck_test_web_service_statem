@@ -21,4 +21,4 @@ distclean: clean
 	$(if $(wildcard .eqc/), rm -r .eqc/)
 	$(if $(wildcard .rebar3/), rm -r .rebar3/)
 	$(if $(wildcard test/.rebar3/), rm -r test/.rebar3/)
-	$(if $(wildcard _build), rm -r _build)
+	$(if $(wildcard _build), rm -rf _build)

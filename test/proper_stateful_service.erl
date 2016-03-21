@@ -71,7 +71,7 @@ postcondition(_S, {call,?MODULE,reset,[]}, Result) ->
 postcondition(S, {call,?MODULE,take,[]}, Result) ->
     Result == 1 + S#state.data.
 
- prop_ticket_dispenser() ->
+prop_ticket_dispenser() ->
     {ok, _} = application:ensure_all_started(inets),
     ?FORALL(Cmds, proper_statem:commands(?MODULE),
             ?TRAPEXIT(
@@ -85,7 +85,7 @@ postcondition(S, {call,?MODULE,take,[]}, Result) ->
                end
               )).
 
- prop_par_ticket_dispenser() ->
+prop_par_ticket_dispenser() ->
     {ok, _} = application:ensure_all_started(inets),
     ?FORALL(Cmds, proper_statem:parallel_commands(?MODULE),
             ?TRAPEXIT(
