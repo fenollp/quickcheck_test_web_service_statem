@@ -1,3 +1,4 @@
 _build
 .eqc-info
 *.eqc
+.rebar3/
