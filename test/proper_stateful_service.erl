@@ -35,41 +35,41 @@
 
 -spec command(state()) -> call().
 command(_S) ->
-  frequency([ {1, {call, ?MODULE, reset, []}}
-            , {10, {call, ?MODULE, take, []}}
-            ]).
+    frequency([ {1, {call, ?MODULE, reset, []}}
+              , {10, {call, ?MODULE, take, []}}
+              ]).
 
 reset() ->
     Txt = http(get, "http://localhost:4000/reset"),
     binary_to_integer(Txt).
 
 take() ->
-  Txt = http(get, "http://localhost:4000/take"),
-  binary_to_integer(Txt).
+    Txt = http(get, "http://localhost:4000/take"),
+    binary_to_integer(Txt).
 
 initial_state() ->
-  #state{ data = 0
-        }.
+    #state{ data = 0
+          }.
 
 %% _CallReturn is often called V
 %%   * must use symbolic calls  on it as it handles symbolic vars
 %%   eg: don't call hd(V), instead return:
 %%     S#state{users = [{call,erlang,hd,[V]}|S#state.users]}
 next_state(S=#state{}, CallReturn, _Call) ->
-  S#state{data = CallReturn}.
+    S#state{data = CallReturn}.
 
 %% _Call: symbolic call to be performed
 %% _S: state that the call will be seeing
 %% Purpose: whether _Call should be executed
 precondition(_S, _Call) ->
-  true.
+    true.
 
 %% Purpose: check correctness of call result
 -spec postcondition(state(), call(), result()) -> boolean().
 postcondition(_S, {call,?MODULE,reset,[]}, Result) ->
-  Result == 0;
+    Result == 0;
 postcondition(S, {call,?MODULE,take,[]}, Result) ->
-  Result == 1 + S#state.data.
+    Result == 1 + S#state.data.
 
  prop_ticket_dispenser() ->
     {ok, _} = application:ensure_all_started(inets),
