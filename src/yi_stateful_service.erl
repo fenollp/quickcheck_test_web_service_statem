@@ -20,12 +20,12 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, { mr_county_guy = -1 :: non_neg_integer()
+-record(state, { mr_county_guy = 0 :: non_neg_integer()
                , listen_socket :: gen_tcp:socket()
                }).
 
 -define(LOG(Fmt, List),
-        io:format(Fmt++"\n", List)).
+        io:format(user, Fmt++"\n", List)).
 
 %% API
 
