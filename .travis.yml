@@ -1,13 +1,11 @@
 sudo: false
 language: erlang
-otp_release:
-  - 18.2
-  - 17.5
-  - R16B02
-
+otp_release: 20.3
 before_install: set -e
+after_script: set +e
 install:
-  - wget https://s3.amazonaws.com/rebar3/rebar3 && chmod +x rebar3
-  - export PATH="$TRAVIS_BUILD_DIR:$PATH"
-script: rebar3 compile
-after_success: rebar3 as test proper -p prop_ticket_dispenser
+- curl -#fSLo ./rebar3 https://s3.amazonaws.com/rebar3/rebar3 && chmod +x ./rebar3
+- export PATH=.:"$PATH"
+script:
+- rebar3 compile
+- rebar3 as test proper
