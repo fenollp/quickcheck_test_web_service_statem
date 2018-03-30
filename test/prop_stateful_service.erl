@@ -1,7 +1,7 @@
 %% Copyright © 2016 Pierre Fenoll ‹pierrefenoll@gmail.com›
 %% See LICENSE for licensing information.
 %% -*- coding: utf-8 -*-
--module(proper_stateful_service).
+-module(prop_stateful_service).
 -behaviour(proper_statem).
 
 %% proper_stateful_service: PropEr testing stateful_service.
@@ -71,7 +71,9 @@ postcondition(_S, {call,?MODULE,reset,[]}, Result) ->
 postcondition(S, {call,?MODULE,take,[]}, Result) ->
     Result == 1 + S#state.data.
 
-prop_ticket_dispenser() ->
+%% Properties
+
+prop_seq_ticket_dispenser() ->
     {ok, _} = application:ensure_all_started(inets),
     ?FORALL(Cmds, proper_statem:commands(?MODULE),
             ?TRAPEXIT(

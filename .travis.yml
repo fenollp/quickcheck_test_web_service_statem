@@ -7,5 +7,6 @@ install:
 - curl -#fSLo ./rebar3 https://s3.amazonaws.com/rebar3/rebar3 && chmod +x ./rebar3
 - export PATH=.:"$PATH"
 script:
-- rebar3 compile
-- rebar3 as test proper
+  - rebar3 compile
+  - rebar3 as test proper -p prop_seq_ticket_dispenser
+# - rebar3 as test proper -p prop_par_ticket_dispenser
