@@ -8,19 +8,19 @@
 
 -include_lib("proper/include/proper.hrl").
 
--record(state, { data :: integer()
+-record(state, {data :: integer()
                }).
 
--export([ reset/0
-        , take/0
+-export([reset/0
+        ,take/0
         ]).
 
-%% API: proper
--export([ command/1
-        , initial_state/0
-        , next_state/3
-        , precondition/2
-        , postcondition/3
+%% Callbacks for PropEr
+-export([command/1
+        ,initial_state/0
+        ,next_state/3
+        ,precondition/2
+        ,postcondition/3
         ]).
 
 
@@ -31,24 +31,27 @@
 -type result() :: any().
 
 
+%% Commands
+
+reset() ->
+    Txt = http(patch, "http://127.0.0.1:4000/reset"),
+    binary_to_integer(Txt).
+
+take() ->
+    Txt = http(patch, "http://127.0.0.1:4000/take"),
+    binary_to_integer(Txt).
+
+
 %% Model
 
 -spec command(state()) -> call().
 command(_S) ->
-    frequency([ {1, {call, ?MODULE, reset, []}}
-              , {10, {call, ?MODULE, take, []}}
+    frequency([{1, {call, ?MODULE, reset, []}}
+              ,{10, {call, ?MODULE, take, []}}
               ]).
 
-reset() ->
-    Txt = http(get, "http://127.0.0.1:4000/reset"),
-    binary_to_integer(Txt).
-
-take() ->
-    Txt = http(get, "http://127.0.0.1:4000/take"),
-    binary_to_integer(Txt).
-
 initial_state() ->
-    #state{ data = 0
+    #state{data = 0
           }.
 
 %% _CallReturn is often called V
@@ -67,19 +70,20 @@ precondition(_S, _Call) ->
 %% Purpose: check correctness of call result
 -spec postcondition(state(), call(), result()) -> boolean().
 postcondition(_S, {call,?MODULE,reset,[]}, Result) ->
-    Result == 0;
+    Result =:= 0;
 postcondition(S, {call,?MODULE,take,[]}, Result) ->
-    Result == 1 + S#state.data.
+    is_integer(Result)
+        andalso Result =:= 1 + S#state.data.
 
 %% Properties
 
 prop_seq_ticket_dispenser() ->
     {ok, _} = application:ensure_all_started(inets),
-    ?FORALL(Cmds, proper_statem:commands(?MODULE),
+    ?FORALL(Cmds, commands(?MODULE),
             ?TRAPEXIT(
                begin
                    setup(),
-                   {_History,_State,Result} = Ran = proper_statem:run_commands(?MODULE, Cmds),
+                   {_History,_State,Result}=Ran = run_commands(?MODULE, Cmds),
                    cleanup(),
                    ?WHENFAIL(io:format("History: ~w\nState: ~w\nResult: ~p\n", tuple_to_list(Ran))
                             ,aggregate(command_names(Cmds), Result == ok)
@@ -87,15 +91,16 @@ prop_seq_ticket_dispenser() ->
                end
               )).
 
+%% rebar3 as test proper -m prop_stateful_service -p prop_par_ticket_dispenser -n 1
 prop_par_ticket_dispenser() ->
     {ok, _} = application:ensure_all_started(inets),
-    ?FORALL(Cmds, proper_statem:parallel_commands(?MODULE),
+    ?FORALL(Cmds, parallel_commands(?MODULE),
             ?TRAPEXIT(
                begin
                    setup(),
-                   {_Sequential,_Parallel,Result} = Ran = proper_statem:run_parallel_commands(?MODULE, Cmds),
+                   {_Sequential,_Parallel,Result}=Ran = run_parallel_commands(?MODULE, Cmds),
                    cleanup(),
-                   ?WHENFAIL(io:format("History: ~w\nState: ~w\nResult: ~p\n", tuple_to_list(Ran))
+                   ?WHENFAIL(io:format("Sequential: ~w\nParallel: ~w\nResult: ~p\n", tuple_to_list(Ran))
                             ,aggregate(command_names(Cmds), Result == ok)
                             )
                end
@@ -105,14 +110,14 @@ prop_par_ticket_dispenser() ->
 
 setup() ->
     {ok, _} = application:ensure_all_started(mylib).
-    %% reset().
+%% reset().
 
 cleanup() ->
     ok = application:stop(mylib).
 
-http(get, URL) ->
+http(patch, URL) ->
     {ok, {{"HTTP/1.1", 200, "OK"}, Headers, Txt}} =
-        httpc:request(get, {URL, []}, [], []),
+        httpc:request(patch, {URL,[],"application/json",<<>>}, [], []),
     {_, LengthStr} = lists:keyfind("content-length", 1, Headers),
     Length =
         - length("{\"data\": ")

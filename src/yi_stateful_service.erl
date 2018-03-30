@@ -11,21 +11,20 @@
 
 %% gen_server callbacks
 -export([init/1
-         ,handle_call/3
-         ,handle_cast/2
-         ,handle_info/2
-         ,terminate/2
-         ,code_change/3
+        ,handle_call/3
+        ,handle_cast/2
+        ,handle_info/2
+        ,terminate/2
+        ,code_change/3
         ]).
 
 -define(SERVER, ?MODULE).
 
--record(state, { mr_county_guy = 0 :: non_neg_integer()
-               , listen_socket :: gen_tcp:socket()
+-record(state, {mr_county_guy = 0 :: non_neg_integer()
+               ,listen_socket :: gen_tcp:socket()
                }).
 
--define(LOG(Fmt, List),
-        io:format(user, Fmt++"\n", List)).
+-define(LOG(Fmt, List), io:format(user, Fmt++"\n", List)).
 
 %% API
 
@@ -33,23 +32,29 @@ start_link() ->
     gen_server:start_link({local,?SERVER}, ?MODULE, [], []).
 
 read() ->
-    gen_server:call(?SERVER, read).
+    gen_server:call(?SERVER, ?FUNCTION_NAME).
+
+accept() ->
+    ?LOG("asking for accept", []),
+    gen_server:cast(?SERVER, ?FUNCTION_NAME).
 
 %% gen_server API
 
 init([]) ->
-    {ok, ListenSocket} = gen_tcp:listen(4000, [ binary
-                                              , {packet, 0}
-                                              , {reuseaddr, true}
-                                              , {keepalive, false}
-                                              , {active, true}
-                                              ]),
+    ListenOptions = [binary
+                    ,{packet, 0}
+                    ,{reuseaddr, true}
+                    ,{keepalive, false}
+                    ,{active, true}
+                    ],
+    {ok, ListenSocket} = gen_tcp:listen(4000, ListenOptions),
     ?LOG("~s listening on port 4000", [?SERVER]),
     NewState = #state{listen_socket = ListenSocket},
     ?LOG("State: ~p", [NewState#state.mr_county_guy]),
     accept(),
     {ok, NewState}.
 
+%% sync
 handle_call(read, _From, State) ->
     OldValue = State#state.mr_county_guy,
     {reply, OldValue, State};
@@ -57,7 +62,9 @@ handle_call(_Request, _From, State) ->
     ?LOG("unhandled call: ~p", [_Request]),
     {stop, not_implemented, {error,not_implemented}, State}.
 
+%% async
 handle_cast(accept, State=#state{listen_socket = ListenSocket}) ->
+    ?LOG("accepting", []),
     case gen_tcp:accept(ListenSocket, 100) of
         {ok, _Socket} -> ok;
         {error, timeout} -> accept();
@@ -68,16 +75,18 @@ handle_cast(_Msg, State) ->
     ?LOG("unhandled cast: ~p", [_Msg]),
     {stop, {error,not_matched}, State}.
 
-handle_info({tcp,Socket,<<"GET /reset ",_/binary>>}, State) ->
-    NewState = State#state{mr_county_guy = 0},
-    ?LOG("/reset\t State: ~p", [NewState#state.mr_county_guy]),
-    reply(Socket, NewState),
+%% messages
+handle_info({tcp,Socket,<<"PATCH /reset ",_/binary>>}, State) ->
+    NewCounter = 0,
+    NewState = State#state{mr_county_guy = NewCounter},
+    ?LOG("/reset\t State: ~p", [NewCounter]),
+    ok = gen_tcp:send(Socket, data(NewCounter)),
     {noreply, NewState};
-handle_info({tcp,Socket,<<"GET /take ",_/binary>>}, State) ->
-    OldValue = State#state.mr_county_guy,
-    NewState = State#state{mr_county_guy = 1 + OldValue},
-    ?LOG("/take\t State: ~p", [NewState#state.mr_county_guy]),
-    reply(Socket, NewState),
+handle_info({tcp,Socket,<<"PATCH /take ",_/binary>>}, State=#state{mr_county_guy = OldValue}) ->
+    NewState = #state{mr_county_guy = NewCounter}
+        = State#state{mr_county_guy = 1 + OldValue},
+    ?LOG("/take\t State: ~p", [NewCounter]),
+    ok = gen_tcp:send(Socket, data(NewCounter)),
     {noreply, NewState};
 handle_info({tcp_closed,_Socket}, State) ->
     accept(),
@@ -94,15 +103,8 @@ code_change(_OldVsn, State, _Extra) ->
 
 %% Internals
 
-accept() ->
-    gen_server:cast(self(), accept).
-
-reply(Socket, #state{mr_county_guy = Int}) ->
-    Data = data(integer_to_binary(Int)),
-    ok = gen_tcp:send(Socket, Data).
-
-data(Bin) ->
-    Payload = ["{\"data\": ", Bin, "}"],
+data(Int) ->
+    Payload = ["{\"data\": ", integer_to_binary(Int), "}"],
     [ "HTTP/1.1 200 OK\r\n"
       "Content-Length: ", integer_to_binary(iolist_size(Payload)), "\r\n"
       "Content-Type: application/json\r\n"

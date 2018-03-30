@@ -6,31 +6,31 @@
 -compile(export_all).
 
 initial_state() ->
-  1.
+    1.
 
 reset_args(_State) -> [].
 
 reset() ->
-  http(get, "http://127.0.0.1:4000/reset").
+    http(patch, "http://127.0.0.1:4000/reset").
 
 reset_next(_State, _Result, []) ->
-  1.
+    1.
 
 reset_post(_State, [], Result) ->
-  eq(Result, "reset").
+    eq(Result, "reset").
 
 
 take_args(_State) -> [].
 
 take() ->
-  Txt = http(get, "http://127.0.0.1:4000/take"),
-  binary_to_integer(Txt).
+    Txt = http(patch, "http://127.0.0.1:4000/take"),
+    binary_to_integer(Txt).
 
 take_next(State, _Result, []) ->
-  State + 1.
+    State + 1.
 
 take_post(State, [], Result) ->
-  eq(Result, State).
+    eq(Result, State).
 
 
 weight(_State, take) -> 10;
@@ -64,9 +64,9 @@ prop_par_ticket_dispenser() ->
                                                          Result == ok))
                            end)).
 
-http(get, URL) ->
+http(patch, URL) ->
     {ok, {{"HTTP/1.1", 200, "OK"}, Headers, Txt}} =
-        httpc:request(get, {URL, []}, [], []),
+        httpc:request(patch, {URL,[],"application/json",<<>>}, [], []),
     {_, LengthStr} = lists:keyfind("content-length", 1, Headers),
     Length =
         - length("{\"data\": ")
