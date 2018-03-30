@@ -11,7 +11,7 @@ initial_state() ->
 reset_args(_State) -> [].
 
 reset() ->
-  http(get, "http://localhost:4000/reset").
+  http(get, "http://127.0.0.1:4000/reset").
 
 reset_next(_State, _Result, []) ->
   1.
@@ -23,7 +23,7 @@ reset_post(_State, [], Result) ->
 take_args(_State) -> [].
 
 take() ->
-  Txt = http(get, "http://localhost:4000/take"),
+  Txt = http(get, "http://127.0.0.1:4000/take"),
   binary_to_integer(Txt).
 
 take_next(State, _Result, []) ->

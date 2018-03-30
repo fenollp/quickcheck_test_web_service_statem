@@ -40,11 +40,11 @@ command(_S) ->
               ]).
 
 reset() ->
-    Txt = http(get, "http://localhost:4000/reset"),
+    Txt = http(get, "http://127.0.0.1:4000/reset"),
     binary_to_integer(Txt).
 
 take() ->
-    Txt = http(get, "http://localhost:4000/take"),
+    Txt = http(get, "http://127.0.0.1:4000/take"),
     binary_to_integer(Txt).
 
 initial_state() ->
