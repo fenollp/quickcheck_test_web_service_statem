@@ -17,12 +17,10 @@ add(A, B) -> A + B.
 %% rebar3 as test proper -m prop_misc -p prop_add_isa_group -n 999
 prop_add_isa_group() ->
     ?FORALL({X,Y}, {real(),real()}
-        ,begin
-             true
-                 andalso add(X,Y) =:= add(Y,X)
-                 andalso add(X,0) =:= X
-         end
-        ).
+           ,true
+            andalso add(X,Y) =:= add(Y,X)
+            andalso add(X,0) =:= X
+           ).
 
 
 %% rebar3 as test proper
