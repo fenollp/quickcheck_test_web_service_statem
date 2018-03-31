@@ -1,17 +1,29 @@
 sudo: false
 language: erlang
 otp_release: 20.3
-before_install: set -e
-after_script: set +e
+# before_install: set -e
+# after_script: set +e
 install:
 - curl -#fSLo ./rebar3 https://s3.amazonaws.com/rebar3/rebar3 && chmod +x ./rebar3
 - export PATH=.:"$PATH"
 script:
 - rebar3 cover --reset
 - rebar3 do compile,eunit,cover,dialyzer
-- rebar3 as test proper -m prop_misc || true
+- ! rebar3 as test proper -m prop_misc
 - rebar3 as test proper -p prop_seq_ticket_dispenser
 - rebar3 as test proper -p prop_par_ticket_dispenser -n 1
+- git clone --recursive git@github.com:aronisstav/concuerror.git concuerror.git
+- cd concuerror.git && git submodule update --init && make && cd -
+- |
+  ./concuerror,git/bin/concuerror \
+      -m mylib_app_tests -t play_test \
+      --pa _build/test/lib/mylib/test \
+      --pa _build/test/lib/mylib/ebin \
+      --graph interleavings.dot -o concuerror.txt
+- cat concuerror.txt
+- cat interleavings.dot
+after_failure:
+- netstat -nlp | grep 4000
 cache:
   directories:
-  - "$HOME/.cache/rebar3"
+  - $HOME/.cache/rebar3

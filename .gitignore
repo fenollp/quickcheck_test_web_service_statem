@@ -2,3 +2,5 @@ _build
 .eqc-info
 *.eqc
 .rebar3/
+/concuerror.txt
+/interleavings.dot
