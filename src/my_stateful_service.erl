@@ -1,10 +1,10 @@
 %% Copyright © 2016 Pierre Fenoll ‹pierrefenoll@gmail.com›
 %% See LICENSE for licensing information.
 %% -*- coding: utf-8 -*-
--module(yi_stateful_service).
+-module(my_stateful_service).
 -behaviour(gen_server).
 
-%% yi_stateful_service: simple TCP server.
+%% A simple TCP server.
 
 -export([start_link/0]).
 -export([read/0]).

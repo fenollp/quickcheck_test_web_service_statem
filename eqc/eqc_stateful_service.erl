@@ -2,6 +2,7 @@
 
 -include_lib("eqc/include/eqc.hrl").
 -include_lib("eqc/include/eqc_statem.hrl").
+-inlude("mylib.hrl").
 
 -compile(export_all).
 
@@ -11,7 +12,7 @@ initial_state() ->
 reset_args(_State) -> [].
 
 reset() ->
-    http(patch, "http://127.0.0.1:4000/reset").
+    ?APP:patch(?BASE "/reset").
 
 reset_next(_State, _Result, []) ->
     1.
@@ -23,8 +24,7 @@ reset_post(_State, [], Result) ->
 take_args(_State) -> [].
 
 take() ->
-    Txt = http(patch, "http://127.0.0.1:4000/take"),
-    binary_to_integer(Txt).
+    ?APP:patch(?BASE "/take").
 
 take_next(State, _Result, []) ->
     State + 1.
@@ -41,10 +41,10 @@ prop_ticket_dispenser() ->
     with_parameter(print_counterexample, false,
                    ?FORALL(Cmds, commands(?MODULE),
                            begin
-                               {ok, _} = application:ensure_all_started(mylib),
+                               {ok, _} = application:ensure_all_started(?APP),
                                reset(),
                                {History,State,Result} = run_commands(?MODULE, Cmds),
-                               ok = application:stop(mylib),
+                               ok = application:stop(?APP),
                                pretty_commands(?MODULE, Cmds, {History,State,Result},
                                                aggregate(command_names(Cmds),
                                                          Result == ok))
@@ -55,22 +55,11 @@ prop_par_ticket_dispenser() ->
     with_parameter(print_counterexample, false,
                    ?FORALL(Cmds, parallel_commands(?MODULE),
                            begin
-                               {ok, _} = application:ensure_all_started(mylib),
+                               {ok, _} = application:ensure_all_started(?APP),
                                reset(),
                                {History,State,Result} = run_parallel_commands(?MODULE, Cmds),
-                               ok = application:stop(mylib),
+                               ok = application:stop(?APP),
                                pretty_commands(?MODULE, Cmds, {History, State, Result},
                                                aggregate(command_names(Cmds),
                                                          Result == ok))
                            end)).
-
-http(patch, URL) ->
-    {ok, {{"HTTP/1.1", 200, "OK"}, Headers, Txt}} =
-        httpc:request(patch, {URL,[],"application/json",<<>>}, [], []),
-    {_, LengthStr} = lists:keyfind("content-length", 1, Headers),
-    Length =
-        - length("{\"data\": ")
-        + list_to_integer(LengthStr)
-        - length("}"),
-    <<"{\"data\": ", Data:Length/binary, "}">> = list_to_binary(Txt),
-    Data.

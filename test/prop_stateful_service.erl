@@ -7,6 +7,7 @@
 %% proper_stateful_service: PropEr testing stateful_service.
 
 -include_lib("proper/include/proper.hrl").
+-include("mylib.hrl").
 
 -record(state, {data :: integer()
                }).
@@ -34,12 +35,12 @@
 %% Commands
 
 reset() ->
-    Txt = http(patch, "http://127.0.0.1:4000/reset"),
-    binary_to_integer(Txt).
+    io:format(user, "\nreset ~p\n", [self()]),
+    ?APP:patch(?BASE "/reset").
 
 take() ->
-    Txt = http(patch, "http://127.0.0.1:4000/take"),
-    binary_to_integer(Txt).
+    io:format(user, "\ntake ~p\n", [self()]),
+    ?APP:patch(?BASE "/take").
 
 
 %% Model
@@ -109,21 +110,10 @@ prop_par_ticket_dispenser() ->
 %% Internals
 
 setup() ->
-    {ok, _} = application:ensure_all_started(mylib).
+    {ok, _} = application:ensure_all_started(?APP).
 %% reset().
 
 cleanup() ->
-    ok = application:stop(mylib).
-
-http(patch, URL) ->
-    {ok, {{"HTTP/1.1", 200, "OK"}, Headers, Txt}} =
-        httpc:request(patch, {URL,[],"application/json",<<>>}, [], []),
-    {_, LengthStr} = lists:keyfind("content-length", 1, Headers),
-    Length =
-        - length("{\"data\": ")
-        + list_to_integer(LengthStr)
-        - length("}"),
-    <<"{\"data\": ", Data:Length/binary, "}">> = list_to_binary(Txt),
-    Data.
+    ok = application:stop(?APP).
 
 %% End of Module
