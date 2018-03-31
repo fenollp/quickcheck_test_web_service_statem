@@ -7,7 +7,6 @@
 %% A simple TCP server.
 
 -export([start_link/0]).
--export([read/0]).
 
 %% gen_server callbacks
 -export([init/1
@@ -30,9 +29,6 @@
 
 start_link() ->
     gen_server:start_link({local,?SERVER}, ?MODULE, [], []).
-
-read() ->
-    gen_server:call(?SERVER, ?FUNCTION_NAME).
 
 accept() ->
     ?LOG("asking for accept", []),
@@ -58,6 +54,8 @@ init([]) ->
 handle_call(read, _From, State) ->
     OldValue = State#state.mr_county_guy,
     {reply, OldValue, State};
+handle_call(stop, _From, State) ->
+    {stop, normal, ok, State};
 handle_call(_Request, _From, State) ->
     ?LOG("unhandled call: ~p", [_Request]),
     {stop, not_implemented, {error,not_implemented}, State}.
