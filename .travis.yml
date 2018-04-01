@@ -10,8 +10,8 @@ script:
 - rebar3 cover --reset
 - rebar3 do compile,eunit,cover,dialyzer
 - rebar3 as test proper -m prop_add -n 999
-- ! rebar3 as test proper -m prop_mersenne_primes
-- ! rebar3 as test proper -m prop_sets
+- '! rebar3 as test proper -m prop_mersenne_primes'
+- '! rebar3 as test proper -m prop_sets'
 - rebar3 as test proper -p prop_seq_ticket_dispenser
 - rebar3 as test proper -p prop_par_ticket_dispenser -n 1
 - git clone --recursive https://github.com/parapluu/Concuerror.git concuerror.git
