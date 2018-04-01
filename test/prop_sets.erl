@@ -1,5 +1,5 @@
 %% -*- coding: utf-8 -*-
--module(prop_misc).
+-module(prop_sets).
 
 -include_lib("proper/include/proper.hrl").
 
@@ -9,18 +9,8 @@
         ,a_sets_generator/0
         ,another_sets_generator/0
 
-        ,t1/0, t2/0, t3/0
+        %% ,t1/0, t2/0, t3/0
         ]).
-
-
-add(A, B) -> A + B.
-%% rebar3 as test proper -m prop_misc -p prop_add_isa_group -n 999
-prop_add_isa_group() ->
-    ?FORALL({X,Y}, {real(),real()}
-           ,true
-            andalso add(X,Y) =:= add(Y,X)
-            andalso add(X,0) =:= X
-           ).
 
 
 %% rebar3 as test proper
@@ -70,12 +60,12 @@ prop_sets_union_is_commutative_fails_OK_but_shrink_harder() ->
            ).
 
 
-t1() ->
-    proper_gen:sampleshrink(proper_types:shrink_list(vector(5,integer()))).
-t2() ->
-    proper_gen:sampleshrink(vector(5, integer())).
-t3() ->
-    proper_gen:sampleshrink(list(integer())).
+%% t1() ->
+%%     proper_gen:sampleshrink(proper_types:shrink_list(vector(5,integer()))).
+%% t2() ->
+%%     proper_gen:sampleshrink(vector(5, integer())).
+%% t3() ->
+%%     proper_gen:sampleshrink(list(integer())).
 
 prop_shrinking() ->
     ?FORALL(SomeTerm, term(), is_boolean(SomeTerm)).

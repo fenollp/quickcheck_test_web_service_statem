@@ -55,13 +55,6 @@ initial_state() ->
     #state{data = 0
           }.
 
-%% _CallReturn is often called V
-%%   * must use symbolic calls  on it as it handles symbolic vars
-%%   eg: don't call hd(V), instead return:
-%%     S#state{users = [{call,erlang,hd,[V]}|S#state.users]}
-next_state(S=#state{}, CallReturn, _Call) ->
-    S#state{data = CallReturn}.
-
 %% _Call: symbolic call to be performed
 %% _S: state that the call will be seeing
 %% Purpose: whether _Call should be executed
@@ -75,6 +68,10 @@ postcondition(_S, {call,?MODULE,reset,[]}, Result) ->
 postcondition(S, {call,?MODULE,take,[]}, Result) ->
     is_integer(Result)
         andalso Result =:= 1 + S#state.data.
+
+%% NOTE: CallReturn may be symbolic
+next_state(S=#state{}, CallReturn, _Call) ->
+    S#state{data = CallReturn}.
 
 %% Properties
 
